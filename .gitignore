@@ -1,0 +1,7 @@
+/target/
+/dist/
+node_modules/
+coverage/
+*.tgz
+npm/*/bin/
+.env

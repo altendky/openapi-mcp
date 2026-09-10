@@ -1,0 +1,19 @@
+{
+  "name": "@openapi-mcp-rs/darwin-arm64",
+  "version": "0.1.0",
+  "description": "macOS arm64 binary for openapi-mcp",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/altendky/openapi-mcp.git"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "bin"
+  ]
+}

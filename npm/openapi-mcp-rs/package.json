@@ -1,0 +1,39 @@
+{
+  "name": "openapi-mcp-rs",
+  "version": "0.1.0",
+  "description": "MCP server for OpenAPI specifications",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/altendky/openapi-mcp.git"
+  },
+  "homepage": "https://github.com/altendky/openapi-mcp",
+  "bugs": {
+    "url": "https://github.com/altendky/openapi-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "openapi",
+    "modelcontextprotocol"
+  ],
+  "bin": {
+    "openapi-mcp": "bin.js"
+  },
+  "files": [
+    "bin.js",
+    "lib.js"
+  ],
+  "scripts": {
+    "test": "node --test 'test/**/*.test.js'",
+    "test:coverage": "c8 --reporter=lcov --reporter=text node --test 'test/**/*.test.js'"
+  },
+  "dependencies": {
+    "shell-quote": "^1.8.2"
+  },
+  "devDependencies": {
+    "c8": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

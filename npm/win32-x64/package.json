@@ -1,0 +1,19 @@
+{
+  "name": "@openapi-mcp-rs/win32-x64",
+  "version": "0.1.0",
+  "description": "Windows x64 binary for openapi-mcp",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/altendky/openapi-mcp.git"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin"
+  ]
+}

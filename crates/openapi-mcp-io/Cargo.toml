@@ -1,0 +1,27 @@
+[package]
+name = "openapi-mcp-io"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "HTTP execution and MCP serving for OpenAPI tools"
+
+[dependencies]
+http.workspace = true
+openapi-mcp-spec.workspace = true
+openapi-mcp-core.workspace = true
+reqwest.workspace = true
+rmcp = { workspace = true, features = ["server", "transport-io"] }
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["fs"] }
+url.workspace = true
+
+[dev-dependencies]
+axum = { workspace = true, features = ["multipart"] }
+base64.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

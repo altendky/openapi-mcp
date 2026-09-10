@@ -1,0 +1,20 @@
+[package]
+name = "openapi-mcp-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Pure OpenAPI MCP tools, policy, and effects"
+
+[dependencies]
+base64.workspace = true
+http.workspace = true
+openapi-mcp-spec.workspace = true
+rmcp.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

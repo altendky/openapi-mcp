@@ -1,0 +1,25 @@
+[package]
+name = "openapi-mcp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Run an MCP server for an OpenAPI specification"
+
+[dependencies]
+clap.workspace = true
+http.workspace = true
+openapi-mcp-spec.workspace = true
+openapi-mcp-core.workspace = true
+openapi-mcp-io.workspace = true
+rmcp = { workspace = true, features = ["server", "transport-io"] }
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

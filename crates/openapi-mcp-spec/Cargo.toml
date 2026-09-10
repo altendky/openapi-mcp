@@ -1,0 +1,19 @@
+[package]
+name = "openapi-mcp-spec"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Pure OpenAPI parsing, schema inspection, and request building"
+
+[dependencies]
+base64.workspace = true
+http.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true
