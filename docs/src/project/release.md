@@ -89,6 +89,40 @@ new run, verify that its entire bundle is byte-identical to the draft, or arrang
 for publishing to consume the original bundle. Cargo and npm skip existing
 versions only when their checksums match, and GitHub rejects differing assets.
 
+### Initial npm bootstrap
+
+The manual `bootstrap-npm.yml` workflow completes `0.1.0` using the original
+merged-main bundle from run `34768353819`. It pins the source commit, manifest
+checksum, and existing release ID. Before uploading anything it checks the
+original CI result, tag, every draft asset digest, and published crate checksums.
+Jobs inspecting the draft require GitHub contents write permission because
+GitHub restricts draft visibility to callers with push access.
+
+After the workflow is merged, run its default validation-only mode on `main`:
+
+```sh
+gh workflow run bootstrap-npm.yml --ref main
+```
+
+Once validation passes and the temporary `NPM_TOKEN` Actions secret is configured,
+explicitly start publication:
+
+```sh
+gh workflow run bootstrap-npm.yml --ref main -F publish=true
+```
+
+This publishes the original platform tarballs before the launcher, checks fresh
+registry installs and npm exec/npx execution on all five platforms, and only
+then finalizes the existing GitHub release. It leaves `RELEASE_ENABLED` unset
+and does not move the tag. npm provenance identifies this later publication
+workflow and its actual commit; the original build is identified separately by
+the pinned source run, commit, and bundle checksums.
+
+After publication, configure npm trusted publishers for the ordinary `ci.yml`
+workflow, remove and revoke the temporary token, and prepare the subsequent
+development-version PR. This bootstrap does not create that PR automatically.
+The original Actions artifact must remain available until bootstrap completes.
+
 ## Prepare a release
 
 From a clean `main` checkout with normal Git signing/authentication working:

@@ -1,0 +1,153 @@
+name: Bootstrap npm 0.1.0
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the original npm tarballs, test registry installs, and finalize the draft
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.repository == 'altendky/openapi-mcp' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      # GitHub only exposes draft releases to callers with push access.
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: eb1a00812284b4f5e723c13e2a2a51e9ea8730df
+          path: release-source
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-bundle
+          path: dist/bootstrap
+          run-id: 34768353819
+          github-token: ${{ github.token }}
+      - run: python scripts/bootstrap_npm.py check --source release-source --bundle dist/bootstrap
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  npm:
+    needs: check
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      # Preflight must inspect the existing draft before any npm upload.
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: eb1a00812284b4f5e723c13e2a2a51e9ea8730df
+          path: release-source
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-bundle
+          path: dist/bootstrap
+          run-id: 34768353819
+          github-token: ${{ github.token }}
+      - run: python scripts/bootstrap_npm.py npm --source release-source --bundle dist/bootstrap
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BOOTSTRAP_PUBLISH: ${{ inputs.publish }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  registry-test:
+    needs: npm
+    name: Registry smoke (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+          - platform: darwin-x64
+            runner: macos-15-intel
+          - platform: darwin-arm64
+            runner: macos-latest
+          - platform: win32-x64
+            runner: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: eb1a00812284b4f5e723c13e2a2a51e9ea8730df
+          path: release-source
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: false
+      - run: python scripts/bootstrap_npm.py smoke --source release-source
+
+  github:
+    needs: registry-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: eb1a00812284b4f5e723c13e2a2a51e9ea8730df
+          path: release-source
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-bundle
+          path: dist/bootstrap
+          run-id: 34768353819
+          github-token: ${{ github.token }}
+      - run: python scripts/bootstrap_npm.py github --source release-source --bundle dist/bootstrap
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BOOTSTRAP_PUBLISH: ${{ inputs.publish }}
+          BOOTSTRAP_REGISTRY_RESULT: ${{ needs.registry-test.result }}
