@@ -31,6 +31,7 @@ jobs:
         with:
           use_oidc: true
           files: target/coverage/rust.lcov
+          disable_search: true
           flags: rust
           fail_ci_if_error: true
       - name: Upload npm coverage
@@ -38,5 +39,6 @@ jobs:
         with:
           use_oidc: true
           files: npm/openapi-mcp-rs/coverage/lcov.info
+          disable_search: true
           flags: npm
           fail_ci_if_error: true
