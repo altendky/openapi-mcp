@@ -139,7 +139,9 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
         with:
-          cache-key: cargo-package
+          # Cargo's extracted package trees are temporary verification inputs.
+          # rust-cache cleanup reports errors while traversing those trees.
+          cache: false
       - run: cargo package --workspace --locked
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
