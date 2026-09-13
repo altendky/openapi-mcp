@@ -24,9 +24,14 @@ resolution. Linux distribution builds use musl targets. Artifacts are retained
 for inspection.
 
 Publication is a separate step after the local Onshape integration is verified.
-It requires creating/configuring the GitHub repository, confirming ownership of
-the crate names and npm scope, and setting up registry publishing credentials or
-trusted publishers. No publishing workflow is enabled by this initial import.
+The public GitHub repository exists; remaining integration setup is tracked in
+[issue #4](https://github.com/altendky/openapi-mcp/issues/4). Publication still
+requires confirming ownership of the crate names and npm scope, and configuring
+registry credentials or trusted publishers. Release automation is tracked in
+[issue #7](https://github.com/altendky/openapi-mcp/issues/7), with first publication
+to [crates.io in #5](https://github.com/altendky/openapi-mcp/issues/5) and
+[npm in #6](https://github.com/altendky/openapi-mcp/issues/6). These development
+and packaging workflows do not publish packages.
 
 Rust publication order is `openapi-mcp-spec`, `openapi-mcp-core`,
 `openapi-mcp-io`, then `openapi-mcp`. npm platform packages must be available

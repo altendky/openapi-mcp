@@ -1,0 +1,25 @@
+# Local links are the reproducible default; the external-link task overrides this.
+offline = true
+no_progress = true
+include_fragments = "anchor-only"
+include_mail = false
+exclude_all_private = true
+extensions = ["md"]
+
+timeout = 30
+max_retries = 3
+max_concurrency = 16
+
+exclude = [
+    "^https?://example\\.(com|org|net)(/|$)",
+    "\\$\\{",
+    "\\$%7B",
+]
+
+exclude_path = [
+    "(^|/)target/",
+    "(^|/)docs/book/",
+    "(^|/)node_modules/",
+    "(^|/)coverage/",
+    "(^|/)dist/",
+]

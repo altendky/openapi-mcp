@@ -1,0 +1,42 @@
+name: Coverage
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-key: coverage
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+      - run: mise run coverage
+      - name: Save coverage reports
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage
+          path: |
+            target/coverage/rust.lcov
+            npm/openapi-mcp-rs/coverage/lcov.info
+      - name: Upload Rust coverage
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        with:
+          use_oidc: true
+          files: target/coverage/rust.lcov
+          flags: rust
+          fail_ci_if_error: true
+      - name: Upload npm coverage
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        with:
+          use_oidc: true
+          files: npm/openapi-mcp-rs/coverage/lcov.info
+          flags: npm
+          fail_ci_if_error: true

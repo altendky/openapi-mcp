@@ -1,0 +1,108 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-merge-conflict
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.50.1
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.2
+    hooks:
+      - id: markdownlint-cli2
+
+  - repo: https://github.com/lycheeverse/lychee
+    rev: lychee-v0.24.2
+    hooks:
+      - id: lychee-system
+        args: ["--offline", "--no-progress", "--config=.lychee.toml"]
+        types: [markdown]
+
+  - repo: https://github.com/Mergifyio/mergify-pre-commit
+    rev: 1.1.0
+    hooks:
+      - id: validate-mergify-config
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        args: [-verbose]
+
+  - repo: https://github.com/mpalmer/action-validator
+    rev: v0.9.0
+    hooks:
+      - id: action-validator
+        args: [-v]
+        files: ^\.github/(workflows/.*\.ya?ml|actions/.*/action\.ya?ml)$
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.30.0
+    hooks:
+      - id: zizmor
+        args: [--offline, --no-progress, --strict-collection, --min-severity=medium]
+
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt --all --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+        language: system
+        files: (\.rs$|(^|/)Cargo\.(toml|lock)$)
+        pass_filenames: false
+
+      - id: cargo-nextest
+        name: cargo nextest
+        entry: cargo nextest run --workspace --all-features --locked
+        language: system
+        files: (\.rs$|(^|/)Cargo\.(toml|lock)$|^\.config/nextest\.toml$)
+        pass_filenames: false
+        stages: [manual]
+
+      - id: cargo-deny
+        name: cargo deny
+        entry: cargo deny --locked check
+        language: system
+        pass_filenames: false
+        stages: [manual]
+
+      - id: mise-lock
+        name: mise lock
+        entry: mise install --locked --dry-run
+        language: system
+        files: ^mise\.(toml|lock)$
+        pass_filenames: false
+
+      - id: mdbook-build
+        name: mdbook build
+        entry: mise exec -- mdbook build docs
+        language: system
+        files: ^docs/
+        pass_filenames: false
+
+      - id: check-versions
+        name: check workspace and npm versions
+        entry: python scripts/check-versions.py
+        language: system
+        files: ^(Cargo\.toml|npm/.*/package(-lock)?\.json|scripts/check-versions\.py)$
+        pass_filenames: false

@@ -78,32 +78,31 @@ level. The HTTP executor supports JSON and binary multipart request bodies.
 ## Development
 
 ```sh
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace --all-features
-cargo build -p openapi-mcp
-python scripts/smoke-test.py -- target/debug/openapi-mcp
-npm ci --prefix npm/openapi-mcp-rs
-npm test --prefix npm/openapi-mcp-rs
+mise install --locked
+mise run check
 ```
 
-The smoke test starts a local API and a real MCP process, and checks discovery,
-JSON requests, authentication overrides, binary responses, HTTP errors, and
-permitted/denied uploads. It also accepts launcher commands such as
-`node /absolute/path/to/bin.js` after `--`.
+Mise supplies the local and CI tools from `mise.toml` and `mise.lock`. Rust is
+pinned separately in `rust-toolchain.toml`. The check task runs formatting,
+Clippy, version consistency, Rust and npm tests, docs, dependency checks, and
+stdio and installed-package smoke tests.
 
-Build npm tarballs for the current platform without publishing:
+Run individual checks or build the documentation:
 
 ```sh
-python scripts/package-npm.py --binary target/debug/openapi-mcp
-python scripts/test-npm-package.py dist
+mise run test
+mise run package-test
+mise run docs
 ```
 
-The second command installs both generated tarballs into a temporary directory
-and runs the smoke test through its `node_modules/openapi-mcp-rs/bin.js`. It may
-download the launcher's JavaScript dependencies from npm. Testing outside this
-checkout exercises installed platform-package resolution. See [distribution](docs/distribution.md)
-for the packaging and release boundary.
+The smoke tests exercise a local API through a real MCP process. The package
+test builds npm tarballs for the current platform, installs them outside the
+checkout, and tests the installed launcher. It does not publish packages.
+
+See [development](docs/src/project/development.md) for the task reference and
+prerequisites, [CI](docs/src/project/ci.md) for required checks, and
+[distribution](docs/distribution.md) for the packaging and release boundary.
+The documentation book is built into `docs/book/`.
 
 ## Origin and license
 
