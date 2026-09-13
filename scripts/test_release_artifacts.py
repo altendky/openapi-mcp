@@ -203,6 +203,46 @@ class ReleaseTests(unittest.TestCase):
                 publish.github(self.output)
             command.assert_not_called()
 
+    def test_github_new_draft_can_be_uploaded_and_published(self):
+        artifacts.bundle(self.inputs, self.output)
+        tag = f"v{self.version}"
+        release = {"tag_name": tag, "draft": True, "assets": []}
+        created = False
+        mutations = []
+
+        def lookup(args, **kwargs):
+            if "/releases/tags/" in args[-1]:
+                raise publish.subprocess.CalledProcessError(1, args, stderr="HTTP 404")
+            self.assertEqual(args[-1], "repos/altendky/openapi-mcp/releases")
+            return json.dumps([[{"tag_name": "v0.0.0"}], [release] if created else []])
+
+        def mutate(*args):
+            nonlocal created
+            mutations.append(args)
+            if args[:3] == ("gh", "release", "create"):
+                self.assertFalse(created)
+                self.assertIn("--draft", args)
+                created = True
+            else:
+                self.assertTrue(created)
+
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "altendky/openapi-mcp"}), patch.object(publish.subprocess, "check_output", side_effect=lookup), patch.object(publish, "verify"), patch.object(publish, "run", side_effect=mutate):
+            publish.github(self.output)
+        self.assertEqual(mutations[0][:4], ("gh", "release", "create", tag))
+        self.assertEqual(mutations[-1], ("gh", "release", "edit", tag, "--repo", "altendky/openapi-mcp", "--draft=false"))
+        self.assertEqual(mutations[1:-1], [
+            ("gh", "release", "upload", tag, path, "--repo", "altendky/openapi-mcp")
+            for path in sorted(self.output.iterdir())
+        ])
+
+    def test_github_missing_created_draft_stops_before_upload(self):
+        artifacts.bundle(self.inputs, self.output)
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "altendky/openapi-mcp"}), patch.object(publish.subprocess, "check_output", return_value="[[]]"), patch.object(publish, "verify"), patch.object(publish, "run") as command:
+            with self.assertRaisesRegex(RuntimeError, "created draft release is not visible"):
+                publish.github(self.output)
+            command.assert_called_once()
+            self.assertEqual(command.call_args.args[:3], ("gh", "release", "create"))
+
 
 if __name__ == "__main__":
     unittest.main()
