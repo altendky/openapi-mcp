@@ -27,14 +27,19 @@ installs the produced tarballs outside the checkout to test actual npm package
 resolution. Linux distribution builds use musl targets. Artifacts are retained
 for inspection.
 
-Publication is a separate step after the local Onshape integration is verified.
-The public GitHub repository and its integrations are configured. Publication still
-requires confirming ownership of the crate names and npm scope, and configuring
-registry credentials or trusted publishers. Release automation requires the
-explicit `RELEASE_ENABLED` repository variable, with first publication
-to [crates.io in #5](https://github.com/altendky/openapi-mcp/issues/5) and
-[npm in #6](https://github.com/altendky/openapi-mcp/issues/6). These development
-and ordinary packaging runs do not publish packages.
+All four Rust crates are published on crates.io at `0.1.0`, owned by `altendky`,
+with trusted publishing configured for this repository's `ci.yml` workflow.
+The initial crate publication used a temporary bootstrap token and the tested
+`v0.1.0` artifacts. Library consumers can use registry dependencies, and the CLI
+can be installed with `cargo install openapi-mcp --version 0.1.0 --locked`.
+
+Initial npm publication remains in
+[issue #6](https://github.com/altendky/openapi-mcp/issues/6), including npm scope
+ownership and publishing authentication. The GitHub release is a draft with the
+complete tested bundle while npm publication and registry smoke checks remain
+pending. Automatic tagging and publishing still require the explicit
+`RELEASE_ENABLED` repository variable. Ordinary development and packaging runs
+do not publish packages.
 
 Rust publication order is `openapi-mcp-spec`, `openapi-mcp-core`,
 `openapi-mcp-io`, then `openapi-mcp`. npm platform packages must be available

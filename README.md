@@ -4,6 +4,15 @@ Run an MCP server for an OpenAPI JSON specification, or embed the same tools in
 another Rust application. The four tools search operations, explain their inputs,
 call an API, and inspect component schemas.
 
+## Install from crates.io
+
+The CLI and all three libraries are published at version `0.1.0`.
+
+```sh
+cargo install openapi-mcp --version 0.1.0 --locked
+openapi-mcp --spec /absolute/path/to/openapi.json
+```
+
 ## Run locally
 
 ```sh
@@ -22,8 +31,9 @@ executable. Once released, its invocation will be:
 npx --yes openapi-mcp-rs --spec /absolute/path/to/openapi.json
 ```
 
-This repository is being prepared for its first release. Local builds and npm
-tarballs can be used before registry publication.
+The npm packages are awaiting their first registry publication in
+[issue #6](https://github.com/altendky/openapi-mcp/issues/6). Local npm tarballs
+can be used in the meantime.
 
 ## Configuration
 
@@ -64,6 +74,15 @@ Embedded hosts can provide their own executor and authentication lifecycle.
 | `openapi-mcp-core` | Sans-IO tools, policies, effects, and continuations |
 | `openapi-mcp-io` | Effect runner, HTTP executor, and tools-only MCP server |
 | `openapi-mcp` | Configuration and standalone stdio executable |
+
+Consuming projects can replace temporary sibling paths with registry dependencies:
+
+```toml
+[dependencies]
+openapi-mcp-spec = "0.1.0"
+openapi-mcp-core = "0.1.0"
+openapi-mcp-io = "0.1.0"
+```
 
 The parser retains source schema metadata. Hosts supply presentation and
 validation callbacks through `Policy`, and can replace `RequestExecutor` for

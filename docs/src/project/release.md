@@ -46,11 +46,10 @@ downloaded bundle from the same commit:
 python scripts/release_artifacts.py verify /absolute/path/to/release-bundle
 ```
 
-## First-publication setup
+## Registry setup and first publication
 
 Publishing and automatic tagging are disabled unless the repository Actions
 variable `RELEASE_ENABLED` is exactly `true`. Leave it unset while completing
-[crates.io setup (#5)](https://github.com/altendky/openapi-mcp/issues/5) and
 [npm setup (#6)](https://github.com/altendky/openapi-mcp/issues/6). Enabling it
 authorizes the next successful stable-version main run to create a tag and
 publish the distributions. Do that only when both registries are ready.
@@ -59,36 +58,47 @@ The existing release App uses `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
 It creates tags and signed post-release commits/PRs. The automatic GitHub token
 creates the GitHub release; it needs no separate long-lived token.
 
-Configure [crates.io trusted publishing](https://crates.io/docs/trusted-publishing)
-for all four crates and [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/)
-for the launcher and all five platform packages. Use this repository and the
-workflow identity requested by each registry: the entry workflow is `ci.yml`,
-and the publishing jobs are in the called `reflow-release.yml`. npm matches the
-entry workflow filename, `ci.yml`. Permit direct publishing in npm's publisher
-settings. There is no GitHub environment restriction in these workflows.
+The four crates are published at `0.1.0`, and
+[crates.io trusted publishing](https://crates.io/docs/trusted-publishing) is
+configured for each crate. The initial publication used a temporary token,
+published in dependency order, and verified every registry checksum against the
+successful merged-main CI bundle at tag `v0.1.0`.
+The publisher configurations have been verified; the first automated OIDC token
+exchange remains to be checked when publishing is enabled.
+
+Configure [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/)
+for the launcher and all five platform packages after their first publication.
+Both registries use the entry workflow filename, `ci.yml`, even though the
+publishing jobs are in the called `reflow-release.yml`.
+Permit direct publishing in npm's publisher settings. There is no GitHub
+environment restriction in these workflows.
 
 Initial package creation may require temporary Actions secrets
 `CARGO_REGISTRY_TOKEN` and `NPM_TOKEN`, with access to the intended crate names
-and npm scope. These take precedence over trusted publishing. Remove the
-bootstrap secrets after configuring and verifying the registry publishers.
+and npm scope. Remove the bootstrap secrets after configuring and verifying
+the registry publishers.
 The crates.io action obtains a short-lived token; npm uses GitHub OIDC and
 provenance. Both publication jobs have `id-token: write`.
 
-For the initial `0.1.0`, prepare a release PR as below even though the repository
-already has that version. An empty, signed release commit makes that intent
-reviewable. Alternatively, after explicitly completing setup, a manual CI run
-on the stable-version `main` can start the first release.
+The `v0.1.0` tag already exists. Its GitHub release remains a draft with the
+tested bundle until npm publication and registry smoke checks succeed. Do not
+prepare another `0.1.0` PR or move its tag. Complete npm setup and retain the
+original bundle for initial publication and recovery. A new CI run rebuilds the
+bundle; it does not reuse the draft's assets. Before enabling publication on a
+new run, verify that its entire bundle is byte-identical to the draft, or arrange
+for publishing to consume the original bundle. Cargo and npm skip existing
+versions only when their checksums match, and GitHub rejects differing assets.
 
 ## Prepare a release
 
 From a clean `main` checkout with normal Git signing/authentication working:
 
 ```sh
-mise run release 0.1.0
+mise run release 0.1.1
 ```
 
 The task pulls main with `--ff-only`, rejects existing release branches/tags and
-version downgrades, creates `release/v0.1.0`, synchronizes the workspace/internal
+version downgrades, creates `release/v0.1.1`, synchronizes the workspace/internal
 dependency versions, Cargo lockfile, and npm manifests/lockfile, then creates a
 signed commit, pushes the branch, and opens a PR. It does not update third-party
 dependencies. Any failure stops the command without an automatic retry.
