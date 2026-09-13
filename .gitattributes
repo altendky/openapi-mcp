@@ -1,0 +1,2 @@
+# The launcher tarball and bundled licenses must have identical bytes on every OS.
+* text=auto eol=lf

@@ -104,5 +104,5 @@ repos:
         name: check workspace and npm versions
         entry: python scripts/check-versions.py
         language: system
-        files: ^(Cargo\.toml|npm/.*/package(-lock)?\.json|scripts/check-versions\.py)$
+        files: ^(Cargo\.(toml|lock)|crates/.*/Cargo\.toml|npm/.*/package(-lock)?\.json|scripts/(check-versions|release-version)\.py)$
         pass_filenames: false

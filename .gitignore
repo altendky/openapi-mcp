@@ -4,6 +4,7 @@
 /.lycheecache
 node_modules/
 coverage/
+__pycache__/
 *.tgz
 npm/*/bin/
 .env

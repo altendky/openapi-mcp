@@ -42,12 +42,12 @@ def run(binary, target, output):
         (native / "bin" / name).chmod(0o755)
         main["optionalDependencies"] = {"@openapi-mcp-rs/" + name: main["version"] for name in PLATFORMS}
         main["files"] = ["bin.js", "lib.js", "LICENSE-MIT", "LICENSE-APACHE"]
-        (wrapper / "package.json").write_text(json.dumps(main, indent=2) + "\n")
+        (wrapper / "package.json").write_text(json.dumps(main, indent=2) + "\n", encoding="utf-8", newline="\n")
         native_manifest = json.loads((native / "package.json").read_text())
         native_manifest["files"] = ["bin", "LICENSE-MIT", "LICENSE-APACHE"]
         if native_manifest["version"] != main["version"]:
             raise RuntimeError("launcher and platform package versions differ")
-        (native / "package.json").write_text(json.dumps(native_manifest, indent=2) + "\n")
+        (native / "package.json").write_text(json.dumps(native_manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
         for directory in [native, wrapper]:
             for name in ["LICENSE-MIT", "LICENSE-APACHE"]:
                 shutil.copy2(ROOT / name, directory / name)

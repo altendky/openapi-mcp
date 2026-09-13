@@ -7,3 +7,4 @@
 - [Development](project/development.md)
 - [CI and integrations](project/ci.md)
 - [Distribution](project/distribution.md)
+- [Releases](project/release.md)

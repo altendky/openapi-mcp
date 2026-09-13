@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -24,10 +25,18 @@ jobs:
         with:
           cache-key: checks
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - run: mise install --locked --dry-run
       - run: mise run fmt
       - run: mise run clippy
       - run: mise run versions
+      - name: Check release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python scripts/release-version.py check --tag "$TAG"
+      - run: mise run release-test
 
   msrv:
     runs-on: ubuntu-latest
@@ -82,6 +91,8 @@ jobs:
           targets: ${{ matrix.target }}
           cache-key: test-${{ matrix.platform }}
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - if: startsWith(matrix.platform, 'linux-')
         run: sudo apt-get update && sudo apt-get install -y musl-tools
       - run: mise run test
@@ -108,10 +119,52 @@ jobs:
       - run: mise run smoke -- --binary target/${{ matrix.target }}/release/${{ matrix.binary }}
       - run: mise run npm-test
       - run: mise run package-test -- --binary target/${{ matrix.target }}/release/${{ matrix.binary }} --platform ${{ matrix.platform }}
+      - run: python scripts/release_artifacts.py pack --binary target/${{ matrix.target }}/release/${{ matrix.binary }} --platform ${{ matrix.platform }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: npm-${{ matrix.platform }}
           path: dist/*.tgz
+          if-no-files-found: error
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-${{ matrix.platform }}
+          path: dist/native/*
+          if-no-files-found: error
+
+  cargo-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          # Cargo's extracted package trees are temporary verification inputs.
+          # rust-cache cleanup reports errors while traversing those trees.
+          cache: false
+      - run: cargo package --workspace --locked
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: crates
+          path: target/package/*.crate
+          if-no-files-found: error
+
+  release-artifacts:
+    needs: [test-and-package, cargo-package]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: artifacts
+      - run: python scripts/release_artifacts.py bundle --input artifacts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-bundle
+          path: dist/release/*
+          if-no-files-found: error
 
   validation:
     name: ${{ matrix.task }}
@@ -132,9 +185,34 @@ jobs:
   all:
     name: all
     if: ${{ !cancelled() }}
-    needs: [checks, msrv, test-and-package, validation, coverage]
+    needs: [checks, msrv, test-and-package, cargo-package, release-artifacts, validation, coverage]
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
+
+  tag-release:
+    needs: all
+    if: >-
+      vars.RELEASE_ENABLED == 'true' && github.repository == 'altendky/openapi-mcp' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    uses: ./.github/workflows/reflow-tag-release.yml
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+  release:
+    needs: all
+    if: >-
+      vars.RELEASE_ENABLED == 'true' && github.repository == 'altendky/openapi-mcp' &&
+      startsWith(github.ref, 'refs/tags/v') &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/reflow-release.yml
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

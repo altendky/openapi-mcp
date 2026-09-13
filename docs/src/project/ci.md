@@ -1,6 +1,7 @@
 # CI and integrations
 
-GitHub Actions runs CI for pull requests and pushes to `main`. The orchestrator
+GitHub Actions runs CI for pull requests, pushes to `main`, `v*` tags, and manual
+runs. The orchestrator
 calls reusable workflows and combines their results in the required check named
 exactly `all`. A failed required workflow keeps the aggregate from succeeding.
 
@@ -18,6 +19,8 @@ CI covers:
 - Cargo dependency policy and npm dependency audit.
 - Documentation builds, tests, and Markdown link checks.
 - Rust and npm coverage, uploaded to Codecov using GitHub Actions OIDC.
+- Packaged Rust crate verification, release helper tests, and a complete native,
+  Cargo, and npm release bundle with checksums.
 
 Actions are pinned to commit hashes. Workflows use read permissions by default
 and disable persistent checkout credentials. Coverage jobs request the OIDC
@@ -42,16 +45,17 @@ Keep the development Rust toolchain and MSRV update policies distinct.
 
 `.mergify.yml` queues eligible non-draft PRs to `main` when they receive the
 `enqueue` label. It uses merge commits and approves PRs from the configured
-Renovate bot. The release bot's post-release PR approval rule is reserved for
-future release automation. Both the Mergify configuration and its repository
+Renovate bot and post-release version PRs from the release App. Both the Mergify configuration and its repository
 access are needed for merge automation to operate.
 
 ## Release boundary
 
-CI builds inspectable artifacts and tests local package installation. Publishing
-is separate: [release automation #7](https://github.com/altendky/openapi-mcp/issues/7),
-[crates.io #5](https://github.com/altendky/openapi-mcp/issues/5), and
-[npm #6](https://github.com/altendky/openapi-mcp/issues/6).
+CI builds inspectable artifacts and tests local package installation. The
+[release workflow](release.md) starts only after the required `all` check passes
+and the repository variable `RELEASE_ENABLED` is `true`. Main runs can create a
+release tag; matching stable tag runs can publish. Initial registry setup and
+publication remain in [crates.io #5](https://github.com/altendky/openapi-mcp/issues/5)
+and [npm #6](https://github.com/altendky/openapi-mcp/issues/6).
 
 Use [onshape-mcp](https://github.com/altendky/onshape-mcp) and
 [onshape-export](https://github.com/altendky/onshape-export) as references for

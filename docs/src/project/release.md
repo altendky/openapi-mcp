@@ -1,0 +1,142 @@
+# Releases
+
+All four Rust crates and the six npm packages use one workspace version. The
+workflow follows [onshape-mcp's release process](https://github.com/altendky/onshape-mcp/blob/main/docs/src/project/release.md),
+with release preparation through a PR and a subsequent development-version PR.
+Only stable `X.Y.Z` releases are published. Development versions use
+`X.Y.Z-dev.N`; the next version after `0.1.0` is `0.1.1-dev.0`.
+
+## Validate without publishing
+
+Every PR, main push, and manual CI run validates the release artifacts. It runs
+the existing Rust, npm, stdio, MSRV, documentation, security, and coverage checks,
+plus:
+
+- `cargo package --workspace --locked`, including building the packaged crates.
+  Cargo uses a temporary registry for the unpublished workspace dependencies.
+- Native release builds on Linux x64/arm64, macOS x64/arm64, and Windows x64.
+  Both Linux binaries use musl and are checked for static linking.
+- Local npm tarball installation and stdio smoke tests on all five platforms.
+- Native archive packaging with the executable and both license files.
+- Assembly of the complete release bundle, checking package identities, exact npm
+  optional-dependency versions, identical launcher tarballs, and identical native
+  binaries in the npm packages and standalone archives.
+
+The required `all` check includes these checks and bundle assembly. Download the
+`release-bundle` artifact from the CI run for inspection. It contains four
+`.crate` files, six npm `.tgz` files, four Unix `.tar.gz` archives, one Windows ZIP,
+`release.json` with the version/commit/digests, and `SHA256SUMS`.
+
+Local commands, none of which publish:
+
+```sh
+mise run release-test
+mise run cargo-package
+mise run package-test
+python scripts/release_artifacts.py pack --binary target/x86_64-unknown-linux-musl/release/openapi-mcp --platform linux-x64
+```
+
+For native archives, first build the executable for the requested platform's
+target, as CI does. Use the appropriate executable/platform for your machine.
+A clean checkout is
+required for Cargo packaging; commit the intended changes first. To validate a
+downloaded bundle from the same commit:
+
+```sh
+python scripts/release_artifacts.py verify /absolute/path/to/release-bundle
+```
+
+## First-publication setup
+
+Publishing and automatic tagging are disabled unless the repository Actions
+variable `RELEASE_ENABLED` is exactly `true`. Leave it unset while completing
+[crates.io setup (#5)](https://github.com/altendky/openapi-mcp/issues/5) and
+[npm setup (#6)](https://github.com/altendky/openapi-mcp/issues/6). Enabling it
+authorizes the next successful stable-version main run to create a tag and
+publish the distributions. Do that only when both registries are ready.
+
+The existing release App uses `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
+It creates tags and signed post-release commits/PRs. The automatic GitHub token
+creates the GitHub release; it needs no separate long-lived token.
+
+Configure [crates.io trusted publishing](https://crates.io/docs/trusted-publishing)
+for all four crates and [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/)
+for the launcher and all five platform packages. Use this repository and the
+workflow identity requested by each registry: the entry workflow is `ci.yml`,
+and the publishing jobs are in the called `reflow-release.yml`. npm matches the
+entry workflow filename, `ci.yml`. Permit direct publishing in npm's publisher
+settings. There is no GitHub environment restriction in these workflows.
+
+Initial package creation may require temporary Actions secrets
+`CARGO_REGISTRY_TOKEN` and `NPM_TOKEN`, with access to the intended crate names
+and npm scope. These take precedence over trusted publishing. Remove the
+bootstrap secrets after configuring and verifying the registry publishers.
+The crates.io action obtains a short-lived token; npm uses GitHub OIDC and
+provenance. Both publication jobs have `id-token: write`.
+
+For the initial `0.1.0`, prepare a release PR as below even though the repository
+already has that version. An empty, signed release commit makes that intent
+reviewable. Alternatively, after explicitly completing setup, a manual CI run
+on the stable-version `main` can start the first release.
+
+## Prepare a release
+
+From a clean `main` checkout with normal Git signing/authentication working:
+
+```sh
+mise run release 0.1.0
+```
+
+The task pulls main with `--ff-only`, rejects existing release branches/tags and
+version downgrades, creates `release/v0.1.0`, synchronizes the workspace/internal
+dependency versions, Cargo lockfile, and npm manifests/lockfile, then creates a
+signed commit, pushes the branch, and opens a PR. It does not update third-party
+dependencies. Any failure stops the command without an automatic retry.
+
+Review the PR and its checks, then approve and merge using the normal repository
+protections. Once publishing is enabled:
+
+1. Successful main CI creates the lightweight `vX.Y.Z` tag using the release App.
+   It refuses to tag a stale main commit or replace an existing tag.
+2. The tag triggers a fresh CI run. The tag must equal the workspace version.
+   All checks and artifact validation must pass before publication starts.
+   Tag builds install their Rust and Mise tools without restoring their caches.
+3. Cargo publishes spec, core, I/O, then CLI. npm publishes all platform packages,
+   then the launcher. Publishers verify the bundle against the checked-out commit;
+   Cargo also repackages and compares the crates before uploading.
+4. Fresh registry npm installations run the stdio smoke test on all five
+   platforms. After success, GitHub publishes the release with every artifact
+   and its checksums.
+5. The release App opens `post-release/vX.Y.Z` to advance main to the next patch's
+   `-dev.0` version. GitHub signs the commit and the helper checks the signature.
+   Mergify approves these App-authored PRs and queues their `enqueue` label through
+   the usual checks and merge protections. Tags themselves are lightweight;
+   they are not signed Git tag objects.
+
+The required `all` check describes validation. Publication and the post-release
+PR run afterward; inspect the complete tag workflow when checking release
+success. A green `all` alone does not mean publication finished.
+
+## Recover an interrupted release
+
+Rerun failed jobs on the original tag run after fixing registry access or a
+transient service problem. The workflow serializes publication and never
+cancels an active release for a newer run.
+
+Existing crate/npm versions are skipped only if their published checksums match
+the validated artifacts. Existing GitHub release assets are likewise checked;
+a draft is completed after all assets are present. Different bytes fail and
+require investigation. Nothing overwrites published packages, tags, assets, or
+post-release branches. If a package upload succeeded but index propagation
+timed out, wait for the registry before retrying the failed jobs.
+
+Prefer rerunning failed jobs to rebuilding the entire release: a fresh build
+may produce different bytes. Preserve the original run's artifacts while
+recovering. If an already-published version differs, do not move its tag or
+silently substitute a new build; investigate and prepare a new version as needed.
+
+If main has advanced to another workspace version, the post-release helper skips
+the development bump. An existing matching branch or open PR is reused; a stale
+checkout, unrelated branch change, or closed unmerged PR stops for inspection.
+Fix the underlying condition and retry the post-release job without deleting
+someone else's work.
