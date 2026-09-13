@@ -48,7 +48,7 @@ python scripts/release_artifacts.py verify /absolute/path/to/release-bundle
 
 ## Registry setup and first publication
 
-Publishing and automatic tagging are disabled unless the repository Actions
+Automatic publishing and tagging are disabled unless the repository Actions
 variable `RELEASE_ENABLED` is exactly `true`. Leave it unset while completing
 [npm setup (#6)](https://github.com/altendky/openapi-mcp/issues/6). Enabling it
 authorizes the next successful stable-version main run to create a tag and
@@ -80,36 +80,43 @@ the registry publishers.
 The crates.io action obtains a short-lived token; npm uses GitHub OIDC and
 provenance. Both publication jobs have `id-token: write`.
 
-The `v0.1.0` tag already exists. Its GitHub release remains a draft with the
-tested bundle until npm publication and registry smoke checks succeed. Do not
-prepare another `0.1.0` PR or move its tag. Complete npm setup and retain the
-original bundle for initial publication and recovery. A new CI run rebuilds the
-bundle; it does not reuse the draft's assets. Before enabling publication on a
-new run, verify that its entire bundle is byte-identical to the draft, or arrange
+The `v0.1.0` GitHub release and all ten registry packages are published. Retain the
+original bundle for recovery. A new CI run rebuilds the bundle; it does not reuse
+the existing release's assets. Before enabling publication on a new run, verify
+that its entire bundle is byte-identical to the existing release, or arrange
 for publishing to consume the original bundle. Cargo and npm skip existing
 versions only when their checksums match, and GitHub rejects differing assets.
 
 ### Initial npm bootstrap
 
-The manual `bootstrap-npm.yml` workflow completes `0.1.0` using the original
+The manual `bootstrap-npm.yml` workflow completed `0.1.0` using the original
 merged-main bundle from run `34768353819`. It pins the source commit, manifest
 checksum, and existing release ID. Before uploading anything it checks the
 original CI result, tag, every draft asset digest, and published crate checksums.
 Jobs inspecting the draft require GitHub contents write permission because
 GitHub restricts draft visibility to callers with push access.
 
-After the workflow is merged, run its default validation-only mode on `main`:
+The successful [bootstrap run](https://github.com/altendky/openapi-mcp/actions/runs/34772262263)
+published all six npm packages with provenance. Initial registry tests ran before
+npm's installation metadata had propagated and could not resolve the native
+optional dependencies. After ordinary fresh-cache installs succeeded, rerunning
+the failed jobs passed all five platforms and finalized the original release.
+No artifacts were rebuilt or replaced.
+
+For read-only verification, its default mode can still be run on `main`:
 
 ```sh
 gh workflow run bootstrap-npm.yml --ref main
 ```
 
-Once validation passes and the temporary `NPM_TOKEN` Actions secret is configured,
-explicitly start publication:
+The original publishing dispatch used a temporary `NPM_TOKEN` Actions secret
+and explicitly requested publication:
 
 ```sh
 gh workflow run bootstrap-npm.yml --ref main -F publish=true
 ```
+
+The temporary Actions secret was removed after the successful run.
 
 This publishes the original platform tarballs before the launcher, checks fresh
 registry installs and npm exec/npx execution on all five platforms, and only
@@ -118,10 +125,10 @@ and does not move the tag. npm provenance identifies this later publication
 workflow and its actual commit; the original build is identified separately by
 the pinned source run, commit, and bundle checksums.
 
-After publication, configure npm trusted publishers for the ordinary `ci.yml`
-workflow, remove and revoke the temporary token, and prepare the subsequent
-development-version PR. This bootstrap does not create that PR automatically.
-The original Actions artifact must remain available until bootstrap completes.
+Configure npm trusted publishers for the ordinary `ci.yml` workflow to complete
+registry setup. The workspace has advanced to `0.1.1-dev.0`; the bootstrap does
+not create that development-version PR automatically. Its original Actions
+artifact must remain available to rerun bootstrap verification.
 
 ## Prepare a release
 

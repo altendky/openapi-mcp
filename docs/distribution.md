@@ -33,13 +33,16 @@ The initial crate publication used a temporary bootstrap token and the tested
 `v0.1.0` artifacts. Library consumers can use registry dependencies, and the CLI
 can be installed with `cargo install openapi-mcp --version 0.1.0 --locked`.
 
-Initial npm publication remains in
-[issue #6](https://github.com/altendky/openapi-mcp/issues/6), including npm scope
-ownership and publishing authentication. The GitHub release is a draft with the
-complete tested bundle while npm publication and registry smoke checks remain
-pending. Automatic tagging and publishing still require the explicit
-`RELEASE_ENABLED` repository variable. Ordinary development and packaging runs
-do not publish packages.
+All six npm packages are published at `0.1.0` with provenance. Their registry
+checksums match the original tested bundle, and fresh registry installs passed
+the stdio smoke test on all five platforms. Run the launcher with
+`npx --yes openapi-mcp-rs@0.1.0 --spec /path/to/openapi.json`.
+
+The [GitHub release](https://github.com/altendky/openapi-mcp/releases/tag/v0.1.0)
+contains the same complete bundle. npm trusted-publisher setup remains tracked in
+[issue #6](https://github.com/altendky/openapi-mcp/issues/6). Automatic tagging and
+publishing still require the explicit `RELEASE_ENABLED` repository variable.
+Ordinary development and packaging runs do not publish packages.
 
 Rust publication order is `openapi-mcp-spec`, `openapi-mcp-core`,
 `openapi-mcp-io`, then `openapi-mcp`. npm platform packages must be available

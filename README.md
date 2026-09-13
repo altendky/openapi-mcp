@@ -25,15 +25,14 @@ comes from the specification. Override it with
 omit `servers`.
 
 The npm distribution is named **openapi-mcp-rs** and launches the `openapi-mcp`
-executable. Once released, its invocation will be:
+executable. Run the published package with:
 
 ```sh
-npx --yes openapi-mcp-rs --spec /absolute/path/to/openapi.json
+npx --yes openapi-mcp-rs@0.1.0 --spec /absolute/path/to/openapi.json
 ```
 
-The npm packages are awaiting their first registry publication in
-[issue #6](https://github.com/altendky/openapi-mcp/issues/6). Local npm tarballs
-can be used in the meantime.
+Version `0.1.0` includes native binaries for Linux and macOS on x64/arm64, and
+Windows on x64. npm selects the package for your platform automatically.
 
 ## Configuration
 
