@@ -68,3 +68,15 @@ run = "python scripts/check.py docs-links"
 [tasks.pre-commit]
 description = "Run all default pre-commit hooks"
 run = "pre-commit run --all-files --show-diff-on-failure"
+
+[tasks.release-test]
+description = "Test release metadata, artifact validation, and publishing safeguards without publishing"
+run = "python -m unittest discover -s scripts -p 'test_release*.py'"
+
+[tasks.cargo-package]
+description = "Package and build all four crates without publishing"
+run = "cargo package --workspace --locked"
+
+[tasks.release]
+description = "Prepare a signed release version PR: mise run release X.Y.Z"
+run = "python scripts/release-version.py prepare"

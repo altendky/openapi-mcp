@@ -51,7 +51,7 @@ def binary_path(binary):
 
 def check(name, *, binary=None, platform=None):
     if name == "check":
-        for task in ["fmt", "clippy", "versions", "test", "docs", "security", "npm-test", "smoke", "package-test"]:
+        for task in ["fmt", "clippy", "versions", "release-test", "test", "docs", "security", "npm-test", "smoke", "package-test"]:
             check(task)
     elif name == "fmt":
         cargo("fmt", "--all", "--check")
@@ -59,6 +59,8 @@ def check(name, *, binary=None, platform=None):
         cargo("clippy", *RUST_FLAGS, "--all-targets", "--", "-D", "warnings")
     elif name == "versions":
         run(sys.executable, ROOT / "scripts/check-versions.py")
+    elif name == "release-test":
+        run(sys.executable, "-m", "unittest", "discover", "-s", "scripts", "-p", "test_release*.py")
     elif name == "test":
         cargo("nextest", "run", *RUST_FLAGS, "--profile", "ci")
         cargo("test", "--doc", *RUST_FLAGS)
@@ -96,7 +98,7 @@ def check(name, *, binary=None, platform=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("check", choices=["check", "fmt", "clippy", "versions", "test", "msrv", "npm-test", "smoke", "package-test", "security", "coverage", "docs", "docs-links"])
+    parser.add_argument("check", choices=["check", "fmt", "clippy", "versions", "release-test", "test", "msrv", "npm-test", "smoke", "package-test", "security", "coverage", "docs", "docs-links"])
     parser.add_argument("--binary", type=Path)
     parser.add_argument("--platform")
     args = parser.parse_args()

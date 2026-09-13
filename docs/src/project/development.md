@@ -27,7 +27,7 @@ access the network. The pre-commit link hook checks local links offline;
 
 | Command | Checks |
 | --- | --- |
-| `mise run check` | Formatting, Clippy, versions, Rust and npm tests, docs, dependency policy, stdio smoke, and installed npm packages |
+| `mise run check` | Formatting, Clippy, versions, release helper tests, Rust and npm tests, docs, dependency policy, stdio smoke, and installed npm packages |
 | `mise run fmt` | Rust formatting |
 | `mise run clippy` | All workspace targets and features with warnings denied |
 | `mise run versions` | Workspace and npm package version consistency |
@@ -36,6 +36,8 @@ access the network. The pre-commit link hook checks local links offline;
 | `mise run npm-test` | JavaScript launcher tests |
 | `mise run smoke` | The standalone stdio server against a local test API |
 | `mise run package-test` | Build local npm tarballs and test the installed launcher outside the checkout |
+| `mise run cargo-package` | Package and build all four Rust crates without publishing (clean checkout) |
+| `mise run release-test` | Test version updates, artifacts, and release recovery without publishing |
 | `mise run coverage` | Rust and npm test coverage |
 | `mise run docs` | Build and test the mdBook documentation |
 | `mise run docs-links` | Check Markdown links |
@@ -70,6 +72,9 @@ installs both into a temporary directory, and runs the smoke test through the
 installed launcher. Its install may download JavaScript dependencies from npm.
 Testing outside the checkout exercises installed platform-package resolution.
 The tarballs remain in `dist/` for inspection; these commands do not publish.
+
+See [Releases](release.md) for complete CI release bundles and the maintainer
+release procedure, including the first-publication gate.
 
 ## Documentation
 

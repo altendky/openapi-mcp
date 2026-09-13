@@ -30,5 +30,15 @@ pull_request_rules:
       review:
         type: APPROVE
 
+  - name: Automatically approve post-release version PRs
+    conditions:
+      - author = altendky-release[bot]
+      - head ~= ^post-release/
+      - base = main
+      - github-review-decision = REVIEW_REQUIRED
+    actions:
+      review:
+        type: APPROVE
+
 merge_protections_settings:
   reporting_method: deployments

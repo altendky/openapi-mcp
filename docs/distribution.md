@@ -1,5 +1,9 @@
 # Distribution
 
+The documentation book's Releases chapter covers version preparation, artifact
+validation, publication gates, and recovery. Initial registry setup and
+publication remain tracked separately in issues #5 and #6.
+
 The Rust workspace has its own version, independent of consuming applications.
 All four Rust crates and six npm packages use that version. The npm package
 `openapi-mcp-rs` launches the binary `openapi-mcp`.
@@ -24,14 +28,13 @@ resolution. Linux distribution builds use musl targets. Artifacts are retained
 for inspection.
 
 Publication is a separate step after the local Onshape integration is verified.
-The public GitHub repository exists; remaining integration setup is tracked in
-[issue #4](https://github.com/altendky/openapi-mcp/issues/4). Publication still
+The public GitHub repository and its integrations are configured. Publication still
 requires confirming ownership of the crate names and npm scope, and configuring
-registry credentials or trusted publishers. Release automation is tracked in
-[issue #7](https://github.com/altendky/openapi-mcp/issues/7), with first publication
+registry credentials or trusted publishers. Release automation requires the
+explicit `RELEASE_ENABLED` repository variable, with first publication
 to [crates.io in #5](https://github.com/altendky/openapi-mcp/issues/5) and
 [npm in #6](https://github.com/altendky/openapi-mcp/issues/6). These development
-and packaging workflows do not publish packages.
+and ordinary packaging runs do not publish packages.
 
 Rust publication order is `openapi-mcp-spec`, `openapi-mcp-core`,
 `openapi-mcp-io`, then `openapi-mcp`. npm platform packages must be available
