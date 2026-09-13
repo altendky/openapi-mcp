@@ -8,7 +8,7 @@ python = "3.14.7"
 "pipx:pre-commit" = "4.6.2"
 "aqua:taiki-e/cargo-llvm-cov" = "0.9.1"
 "aqua:EmbarkStudios/cargo-deny" = "0.20.2"
-"github:nextest-rs/nextest" = { version = "0.9.143", version_prefix = "cargo-nextest-" }
+"github:nextest-rs/nextest" = { version = "0.9.144", version_prefix = "cargo-nextest-" }
 cargo-binstall = "1.23.0"
 "cargo:lychee" = "0.24.2"
 "cargo:mdbook" = "0.5.4"
