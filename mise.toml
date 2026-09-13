@@ -1,0 +1,70 @@
+[settings]
+locked = true
+http_timeout = "120s"
+
+[tools]
+node = "24.21.0"
+python = "3.14.7"
+"pipx:pre-commit" = "4.6.2"
+"aqua:taiki-e/cargo-llvm-cov" = "0.9.1"
+"aqua:EmbarkStudios/cargo-deny" = "0.20.2"
+"github:nextest-rs/nextest" = { version = "0.9.143", version_prefix = "cargo-nextest-" }
+cargo-binstall = "1.23.0"
+"cargo:lychee" = "0.24.2"
+"cargo:mdbook" = "0.5.4"
+
+[tasks.check]
+description = "Run the local validation suite without publishing"
+run = "python scripts/check.py check"
+
+[tasks.fmt]
+description = "Check Rust formatting"
+run = "python scripts/check.py fmt"
+
+[tasks.clippy]
+description = "Check all Rust targets and features with Clippy"
+run = "python scripts/check.py clippy"
+
+[tasks.versions]
+description = "Check workspace and npm version alignment"
+run = "python scripts/check.py versions"
+
+[tasks.test]
+description = "Run Rust tests with JUnit reporting and doctests"
+run = "python scripts/check.py test"
+
+[tasks.msrv]
+description = "Check the MSRV declared in Cargo.toml (install that toolchain first)"
+run = "python scripts/check.py msrv"
+
+[tasks.npm-test]
+description = "Install locked npm dependencies and run launcher tests"
+run = "python scripts/check.py npm-test"
+
+[tasks.smoke]
+description = "Build and exercise the standalone stdio server"
+run = "python scripts/check.py smoke"
+
+[tasks.package-test]
+description = "Pack and install local npm tarballs, then test the installed launcher"
+run = "python scripts/check.py package-test"
+
+[tasks.security]
+description = "Audit Rust dependencies and npm dependencies"
+run = "python scripts/check.py security"
+
+[tasks.coverage]
+description = "Generate Rust and npm LCOV reports"
+run = "python scripts/check.py coverage"
+
+[tasks.docs]
+description = "Build and test the documentation book"
+run = "python scripts/check.py docs"
+
+[tasks.docs-links]
+description = "Check documentation links, including remote URLs"
+run = "python scripts/check.py docs-links"
+
+[tasks.pre-commit]
+description = "Run all default pre-commit hooks"
+run = "pre-commit run --all-files --show-diff-on-failure"

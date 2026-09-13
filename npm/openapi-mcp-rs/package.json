@@ -24,8 +24,8 @@
     "lib.js"
   ],
   "scripts": {
-    "test": "node --test 'test/**/*.test.js'",
-    "test:coverage": "c8 --reporter=lcov --reporter=text node --test 'test/**/*.test.js'"
+    "test": "node --test \"test/*.test.js\"",
+    "test:coverage": "c8 --reporter=lcov --reporter=text node --test \"test/*.test.js\""
   },
   "dependencies": {
     "shell-quote": "^1.8.2"

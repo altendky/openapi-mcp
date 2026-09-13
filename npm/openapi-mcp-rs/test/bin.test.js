@@ -5,9 +5,11 @@ const assert = require("node:assert");
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { quote } = require("shell-quote");
 
 const BIN_JS = path.join(__dirname, "..", "bin.js");
 const MOCK_BINARY = path.join(__dirname, "fixtures", "mock-binary.js");
+const MOCK_COMMAND = quote([process.execPath, MOCK_BINARY]);
 
 // Import exported functions for unit testing
 const {
@@ -48,7 +50,7 @@ function runBin(args = [], envOverrides = {}) {
 
 // Helper to run bin.js with mock binary via OPENAPI_MCP_NPM_COMMAND
 function runWithMock(args = [], commandOverride = null) {
-  const command = commandOverride ?? `${process.execPath} ${MOCK_BINARY}`;
+  const command = commandOverride ?? MOCK_COMMAND;
   return runBin(args, { OPENAPI_MCP_NPM_COMMAND: command });
 }
 
@@ -394,7 +396,7 @@ describe("bin.js", () => {
     describe("command prefix arguments", () => {
       it("should combine command prefix args with user args", () => {
         // Command has extra args that should come before user args
-        const command = `${process.execPath} ${MOCK_BINARY} --prefix-arg`;
+        const command = `${MOCK_COMMAND} --prefix-arg`;
         const result = runWithMock(["--user-arg"], command);
         const output = parseMockOutput(result);
 
@@ -402,7 +404,7 @@ describe("bin.js", () => {
       });
 
       it("should handle multiple prefix args", () => {
-        const command = `${process.execPath} ${MOCK_BINARY} --first --second`;
+        const command = `${MOCK_COMMAND} --first --second`;
         const result = runWithMock(["--third"], command);
         const output = parseMockOutput(result);
 

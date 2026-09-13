@@ -1,5 +1,7 @@
 /target/
 /dist/
+/docs/book/
+/.lycheecache
 node_modules/
 coverage/
 *.tgz

@@ -1,0 +1,34 @@
+name: Project check
+
+on:
+  workflow_call:
+    inputs:
+      task:
+        description: Mise validation task
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-key: ${{ inputs.task }}
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+      - name: Cache pre-commit environments
+        if: inputs.task == 'pre-commit'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml', 'mise.lock') }}
+      - name: Run check
+        env:
+          TASK: ${{ inputs.task }}
+        run: mise run "$TASK"
