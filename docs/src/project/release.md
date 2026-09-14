@@ -4,7 +4,7 @@ All four Rust crates and the six npm packages use one workspace version. The
 workflow follows [onshape-mcp's release process](https://github.com/altendky/onshape-mcp/blob/main/docs/src/project/release.md),
 with release preparation through a PR and a subsequent development-version PR.
 Only stable `X.Y.Z` releases are published. Development versions use
-`X.Y.Z-dev.N`; the next version after `0.1.0` is `0.1.1-dev.0`.
+`X.Y.Z-dev.N`; the next version after `0.1.1` is `0.1.2-dev.0`.
 
 ## Validate without publishing
 
@@ -58,13 +58,15 @@ The existing release App uses `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
 It creates tags and signed post-release commits/PRs. The automatic GitHub token
 creates the GitHub release; it needs no separate long-lived token.
 
-The four crates are published at `0.1.0`, and
+The four crates are published at `0.1.1`, and
 [crates.io trusted publishing](https://crates.io/docs/trusted-publishing) is
 configured for each crate. The initial publication used a temporary token,
 published in dependency order, and verified every registry checksum against the
 successful merged-main CI bundle at tag `v0.1.0`.
-The publisher configurations have been verified; the first automated OIDC token
-exchange remains to be checked during the next stable release.
+The [successful `0.1.1` tag run](https://github.com/altendky/openapi-mcp/actions/runs/34793079472)
+verified automated OIDC publication for all four crates and
+all six npm packages. Registry checksums and GitHub asset digests matched the
+original tag-run bundle, and registry smoke tests passed on all five platforms.
 
 [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) is configured
 and verified for the launcher and all five platform packages.
@@ -79,7 +81,7 @@ in the repository's Actions secrets after the completed bootstrap.
 The crates.io action obtains a short-lived token; npm uses GitHub OIDC and
 provenance. Both publication jobs have `id-token: write`.
 
-The `v0.1.0` GitHub release and all ten registry packages are published. Retain the
+The `v0.1.1` GitHub release and all ten registry packages are published. Retain the
 original bundle for recovery. A new CI run rebuilds the bundle; it does not reuse
 the existing release's assets. When recovering an existing release with a new
 run, verify that its entire bundle is byte-identical to the existing release, or
@@ -125,21 +127,21 @@ and does not move the tag. npm provenance identifies this later publication
 workflow and its actual commit; the original build is identified separately by
 the pinned source run, commit, and bundle checksums.
 
-The npm trusted publishers now use the ordinary `ci.yml` workflow. The workspace
-has advanced to `0.1.1-dev.0`; the bootstrap does not create that
-development-version PR automatically. Its original Actions artifact must remain
-available to rerun bootstrap verification.
+The npm trusted publishers now use the ordinary `ci.yml` workflow. After the
+bootstrap, the workspace was advanced to `0.1.1-dev.0` manually; the bootstrap
+does not create a development-version PR automatically. Its original Actions
+artifact must remain available to rerun bootstrap verification.
 
 ## Prepare a release
 
 From a clean `main` checkout with normal Git signing/authentication working:
 
 ```sh
-mise run release 0.1.1
+mise run release 0.1.2
 ```
 
 The task pulls main with `--ff-only`, rejects existing release branches/tags and
-version downgrades, creates `release/v0.1.1`, synchronizes the workspace/internal
+version downgrades, creates `release/v0.1.2`, synchronizes the workspace/internal
 dependency versions, Cargo lockfile, and npm manifests/lockfile, then creates a
 signed commit, pushes the branch, and opens a PR. It does not update third-party
 dependencies. Any failure stops the command without an automatic retry.
@@ -173,6 +175,20 @@ success. A green `all` alone does not mean publication finished.
 Rerun failed jobs on the original tag run after fixing registry access or a
 transient service problem. The workflow serializes publication and never
 cancels an active release for a newer run.
+
+npm can accept an upload before the version is visible to readers. Publication
+waits up to five minutes per package for matching registry integrity before
+continuing to the next package. Registry installation checks also allow five
+minutes for installation readiness: a failed install or a missing native
+optional package triggers another attempt with a fresh directory and npm cache.
+Once the native package resolves, launcher, version, and stdio smoke failures
+stop immediately without another installation attempt.
+
+After creating a GitHub draft, publication polls the authenticated release list
+for up to two minutes before uploading assets. Draft creation and each npm
+upload happen only once per job invocation. These waits report elapsed time;
+API errors and mismatched checksums stop immediately. A visibility timeout stops
+the job so the service state can be inspected before rerunning failed jobs.
 
 Existing crate/npm versions are skipped only if their published checksums match
 the validated artifacts. Existing GitHub release assets are likewise checked;

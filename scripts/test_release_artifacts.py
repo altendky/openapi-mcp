@@ -144,7 +144,7 @@ class ReleaseTests(unittest.TestCase):
             return {"dist": {"integrity": "sha512-" + base64.b64encode(hashlib.sha512(data).digest()).decode()}}
         wrapper_integrity = "sha512-" + base64.b64encode(hashlib.sha512((self.output / self.wrapper_name).read_bytes()).digest()).decode()
         calls = []
-        def lookup(url):
+        def lookup(url, **kwargs):
             calls.append(url)
             if len(calls) == 7:
                 return {"dist": {"integrity": wrapper_integrity}}
@@ -237,8 +237,8 @@ class ReleaseTests(unittest.TestCase):
 
     def test_github_missing_created_draft_stops_before_upload(self):
         artifacts.bundle(self.inputs, self.output)
-        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "altendky/openapi-mcp"}), patch.object(publish.subprocess, "check_output", return_value="[[]]"), patch.object(publish, "verify"), patch.object(publish, "run") as command:
-            with self.assertRaisesRegex(RuntimeError, "created draft release is not visible"):
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "altendky/openapi-mcp"}), patch.object(publish.subprocess, "check_output", return_value="[[]]"), patch.object(publish, "verify"), patch.object(publish.time, "monotonic", side_effect=(0, 0, 120)), patch.object(publish, "run") as command:
+            with self.assertRaisesRegex(RuntimeError, "Timed out waiting for created GitHub draft"):
                 publish.github(self.output)
             command.assert_called_once()
             self.assertEqual(command.call_args.args[:3], ("gh", "release", "create"))

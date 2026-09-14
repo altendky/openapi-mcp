@@ -23,19 +23,53 @@ import urllib.request
 from release_artifacts import CRATES, ROOT, TARGETS, sha256, verify, version
 
 
+NPM_WAIT_SECONDS = 300
+GITHUB_DRAFT_WAIT_SECONDS = 120
+NATIVE_PACKAGE_MISSING = 75
+NATIVE_PACKAGE_CHECK = """
+const { createRequire } = require('node:module');
+const wrapper = process.argv[1];
+const name = require(wrapper).getPlatformPackage();
+if (!name) throw new Error(`Unsupported platform: ${process.platform}-${process.arch}`);
+try {
+  createRequire(wrapper).resolve(`${name}/package.json`);
+} catch (error) {
+  if (error.code !== 'MODULE_NOT_FOUND') throw error;
+  process.exit(75);
+}
+"""
+
+
 def run(*args, **kwargs):
     return subprocess.run(list(map(str, args)), check=True, **kwargs)
 
 
-def get_json(url):
+def get_json(url, *, timeout=30):
     request = urllib.request.Request(url, headers={"User-Agent": "openapi-mcp-release (github.com/altendky/openapi-mcp)"})
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.load(response)
     except urllib.error.HTTPError as error:
         if error.code == 404:
             return None
         raise
+
+
+def wait_for_visibility(check, description, *, timeout, interval=5):
+    """Retry confirmed absence; let API, integrity, and execution errors propagate."""
+    started = time.monotonic()
+    deadline = started + timeout
+    while (remaining := deadline - time.monotonic()) > 0:
+        result = check(remaining)
+        if result is not None:
+            return result
+        now = time.monotonic()
+        remaining = deadline - now
+        if remaining <= 0:
+            break
+        print(f"Waiting for {description}: {now - started:.0f}s elapsed (limit {timeout}s)", flush=True)
+        time.sleep(min(interval, remaining))
+    raise RuntimeError(f"Timed out waiting for {description} after {timeout}s; inspect service visibility before rerunning the failed job")
 
 
 def require_release():
@@ -96,23 +130,20 @@ def npm(directory):
             print(f"Already published matching {name}@{version()}", flush=True)
             continue
         run(executable, "publish", path, "--access", "public", "--provenance", "--ignore-scripts", "--registry", "https://registry.npmjs.org")
-        for attempt in range(12):
-            published = get_json(url)
-            if published is not None:
-                if published["dist"].get("integrity") != integrity:
-                    raise ValueError(f"registry integrity mismatch: {name}")
-                break
-            time.sleep(5)
-        else:
-            raise RuntimeError(f"registry propagation timed out: {name}; rerun after checking npm")
+        published = wait_for_visibility(
+            lambda remaining: get_json(url, timeout=min(30, remaining)),
+            f"npm package {name}@{version()}", timeout=NPM_WAIT_SECONDS,
+        )
+        if published["dist"].get("integrity") != integrity:
+            raise ValueError(f"registry integrity mismatch: {name}")
 
 
-def find_github_release(repository, tag):
+def find_github_release(repository, tag, *, timeout=None):
     # List via the authenticated API so 404 permission errors are not treated as absence.
     # The release-by-tag endpoint cannot retrieve drafts, including newly created ones.
     releases = json.loads(subprocess.check_output([
         "gh", "api", "--paginate", "--slurp", f"repos/{repository}/releases",
-    ], text=True))
+    ], text=True, timeout=timeout))
     return next((item for page in releases for item in page if item["tag_name"] == tag), None)
 
 
@@ -123,9 +154,10 @@ def github(directory):
     release = find_github_release(repository, tag)
     if release is None:
         run("gh", "release", "create", tag, "--repo", repository, "--draft", "--verify-tag", "--title", tag, "--generate-notes")
-        release = find_github_release(repository, tag)
-        if release is None:
-            raise RuntimeError(f"created draft release is not visible: {tag}; inspect before rerunning")
+        release = wait_for_visibility(
+            lambda remaining: find_github_release(repository, tag, timeout=remaining),
+            f"created GitHub draft {tag}", timeout=GITHUB_DRAFT_WAIT_SECONDS,
+        )
     assets = {asset["name"]: asset for asset in release["assets"]}
     expected = {path.name for path in directory.iterdir()}
     if set(assets) - expected:
@@ -148,24 +180,41 @@ def smoke():
         raise RuntimeError("Node.js and npm are required")
     environment = {key: value for key, value in os.environ.items() if key != "OPENAPI_MCP_NPM_COMMAND"}
     with tempfile.TemporaryDirectory(prefix="openapi-mcp-registry-") as temp:
-        directory = Path(temp)
-        (directory / "package.json").write_text('{"private":true}')
-        # Retry only installation/registry propagation; never retry a failing smoke test.
-        for attempt in range(6):
+        def install(remaining):
+            # Avoid retaining lockfiles, partial node_modules, or stale npm metadata.
+            directory = Path(tempfile.mkdtemp(prefix="install-", dir=temp))
+            (directory / "package.json").write_text('{"private":true}')
+            started = time.monotonic()
             result = subprocess.run([
                 npm_path, "install", f"openapi-mcp-rs@{version()}", "--include=optional", "--ignore-scripts",
                 "--no-audit", "--no-fund", "--registry", "https://registry.npmjs.org",
-            ], cwd=temp, env=environment)
-            if result.returncode == 0:
-                break
-            if attempt == 5:
-                result.check_returncode()
-            time.sleep(10)
+                "--cache", str(directory / "npm-cache"),
+            ], cwd=directory, env=environment, timeout=remaining)
+            remaining -= time.monotonic() - started
+            if result.returncode != 0 or remaining <= 0:
+                shutil.rmtree(directory)
+                return None
+            result = subprocess.run([
+                node, "-e", NATIVE_PACKAGE_CHECK,
+                str(directory / "node_modules/openapi-mcp-rs/lib.js"),
+            ], cwd=directory, env=environment, timeout=remaining)
+            if result.returncode == NATIVE_PACKAGE_MISSING:
+                print("npm install omitted the native optional package; retrying a fresh installation", flush=True)
+                shutil.rmtree(directory)
+                return None
+            result.check_returncode()
+            return directory
+
+        directory = wait_for_visibility(
+            install, f"npm installation of openapi-mcp-rs@{version()}",
+            timeout=NPM_WAIT_SECONDS, interval=10,
+        )
+        # Once the native package exists, real launcher/version/smoke errors are fatal.
         launcher = directory / "node_modules/openapi-mcp-rs/bin.js"
-        actual = subprocess.check_output([node, str(launcher), "--version"], cwd=temp, env=environment, text=True).strip()
+        actual = subprocess.check_output([node, str(launcher), "--version"], cwd=directory, env=environment, text=True).strip()
         if actual != f"openapi-mcp {version()}":
             raise ValueError(f"installed registry binary version mismatch: {actual}")
-        run(sys.executable, ROOT / "scripts/smoke-test.py", "--", node, launcher, cwd=temp, env=environment)
+        run(sys.executable, ROOT / "scripts/smoke-test.py", "--", node, launcher, cwd=directory, env=environment)
 
 
 if __name__ == "__main__":
