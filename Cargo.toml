@@ -3,16 +3,16 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.1-dev.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.89"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/altendky/openapi-mcp"
 
 [workspace.dependencies]
-openapi-mcp-spec = { path = "crates/openapi-mcp-spec", version = "0.1.1-dev.0" }
-openapi-mcp-core = { path = "crates/openapi-mcp-core", version = "0.1.1-dev.0" }
-openapi-mcp-io = { path = "crates/openapi-mcp-io", version = "0.1.1-dev.0" }
+openapi-mcp-spec = { path = "crates/openapi-mcp-spec", version = "0.1.1" }
+openapi-mcp-core = { path = "crates/openapi-mcp-core", version = "0.1.1" }
+openapi-mcp-io = { path = "crates/openapi-mcp-io", version = "0.1.1" }
 axum = "0.8"
 base64 = "0.23"
 clap = { version = "4", features = ["derive", "env"] }
