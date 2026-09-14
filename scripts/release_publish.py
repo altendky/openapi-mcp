@@ -107,18 +107,25 @@ def npm(directory):
             raise RuntimeError(f"registry propagation timed out: {name}; rerun after checking npm")
 
 
+def find_github_release(repository, tag):
+    # List via the authenticated API so 404 permission errors are not treated as absence.
+    # The release-by-tag endpoint cannot retrieve drafts, including newly created ones.
+    releases = json.loads(subprocess.check_output([
+        "gh", "api", "--paginate", "--slurp", f"repos/{repository}/releases",
+    ], text=True))
+    return next((item for page in releases for item in page if item["tag_name"] == tag), None)
+
+
 def github(directory):
     verify(directory)
     tag = f"v{version()}"
     repository = os.environ["GITHUB_REPOSITORY"]
-    # List via the authenticated API so 404 permission errors are not treated as absence.
-    releases = json.loads(subprocess.check_output([
-        "gh", "api", "--paginate", "--slurp", f"repos/{repository}/releases",
-    ], text=True))
-    release = next((item for page in releases for item in page if item["tag_name"] == tag), None)
+    release = find_github_release(repository, tag)
     if release is None:
         run("gh", "release", "create", tag, "--repo", repository, "--draft", "--verify-tag", "--title", tag, "--generate-notes")
-        release = json.loads(subprocess.check_output(["gh", "api", f"repos/{repository}/releases/tags/{tag}"], text=True))
+        release = find_github_release(repository, tag)
+        if release is None:
+            raise RuntimeError(f"created draft release is not visible: {tag}; inspect before rerunning")
     assets = {asset["name"]: asset for asset in release["assets"]}
     expected = {path.name for path in directory.iterdir()}
     if set(assets) - expected:

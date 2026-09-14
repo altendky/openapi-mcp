@@ -1003,7 +1003,7 @@ checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
 name = "openapi-mcp"
-version = "0.1.0"
+version = "0.1.1-dev.0"
 dependencies = [
  "clap",
  "http",
@@ -1019,7 +1019,7 @@ dependencies = [
 
 [[package]]
 name = "openapi-mcp-core"
-version = "0.1.0"
+version = "0.1.1-dev.0"
 dependencies = [
  "base64 0.23.1",
  "http",
@@ -1032,7 +1032,7 @@ dependencies = [
 
 [[package]]
 name = "openapi-mcp-io"
-version = "0.1.0"
+version = "0.1.1-dev.0"
 dependencies = [
  "axum",
  "base64 0.23.1",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "openapi-mcp-spec"
-version = "0.1.0"
+version = "0.1.1-dev.0"
 dependencies = [
  "base64 0.23.1",
  "http",

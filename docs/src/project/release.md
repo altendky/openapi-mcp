@@ -48,11 +48,11 @@ python scripts/release_artifacts.py verify /absolute/path/to/release-bundle
 
 ## Registry setup and first publication
 
-Publishing and automatic tagging are disabled unless the repository Actions
-variable `RELEASE_ENABLED` is exactly `true`. Leave it unset while completing
-[npm setup (#6)](https://github.com/altendky/openapi-mcp/issues/6). Enabling it
-authorizes the next successful stable-version main run to create a tag and
-publish the distributions. Do that only when both registries are ready.
+Automatic publishing and tagging require the repository Actions variable
+`RELEASE_ENABLED` to be exactly `true`. Registry setup is complete and this
+variable is enabled. The next successful main run at a new stable version can
+create its release tag and publish the distributions. Development versions and
+versions with an existing matching tag do not create another tag.
 
 The existing release App uses `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
 It creates tags and signed post-release commits/PRs. The automatic GitHub token
@@ -64,64 +64,71 @@ configured for each crate. The initial publication used a temporary token,
 published in dependency order, and verified every registry checksum against the
 successful merged-main CI bundle at tag `v0.1.0`.
 The publisher configurations have been verified; the first automated OIDC token
-exchange remains to be checked when publishing is enabled.
+exchange remains to be checked during the next stable release.
 
-Configure [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/)
-for the launcher and all five platform packages after their first publication.
+[npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) is configured
+and verified for the launcher and all five platform packages.
 Both registries use the entry workflow filename, `ci.yml`, even though the
 publishing jobs are in the called `reflow-release.yml`.
-Permit direct publishing in npm's publisher settings. There is no GitHub
-environment restriction in these workflows.
+Direct publishing is enabled in npm's publisher settings. There is no GitHub
+environment restriction in the publisher configurations or these workflows.
 
-Initial package creation may require temporary Actions secrets
-`CARGO_REGISTRY_TOKEN` and `NPM_TOKEN`, with access to the intended crate names
-and npm scope. Remove the bootstrap secrets after configuring and verifying
-the registry publishers.
+Initial package creation used temporary credentials with access to the intended
+crate names and npm scope. Neither `CARGO_REGISTRY_TOKEN` nor `NPM_TOKEN` remains
+in the repository's Actions secrets after the completed bootstrap.
 The crates.io action obtains a short-lived token; npm uses GitHub OIDC and
 provenance. Both publication jobs have `id-token: write`.
 
-The `v0.1.0` tag already exists. Its GitHub release remains a draft with the
-tested bundle until npm publication and registry smoke checks succeed. Do not
-prepare another `0.1.0` PR or move its tag. Complete npm setup and retain the
-original bundle for initial publication and recovery. A new CI run rebuilds the
-bundle; it does not reuse the draft's assets. Before enabling publication on a
-new run, verify that its entire bundle is byte-identical to the draft, or arrange
-for publishing to consume the original bundle. Cargo and npm skip existing
-versions only when their checksums match, and GitHub rejects differing assets.
+The `v0.1.0` GitHub release and all ten registry packages are published. Retain the
+original bundle for recovery. A new CI run rebuilds the bundle; it does not reuse
+the existing release's assets. When recovering an existing release with a new
+run, verify that its entire bundle is byte-identical to the existing release, or
+arrange for publishing to consume the original bundle. Cargo and npm skip
+existing versions only when their checksums match, and GitHub rejects differing
+assets.
 
 ### Initial npm bootstrap
 
-The manual `bootstrap-npm.yml` workflow completes `0.1.0` using the original
+The manual `bootstrap-npm.yml` workflow completed `0.1.0` using the original
 merged-main bundle from run `34768353819`. It pins the source commit, manifest
 checksum, and existing release ID. Before uploading anything it checks the
 original CI result, tag, every draft asset digest, and published crate checksums.
 Jobs inspecting the draft require GitHub contents write permission because
 GitHub restricts draft visibility to callers with push access.
 
-After the workflow is merged, run its default validation-only mode on `main`:
+The successful [bootstrap run](https://github.com/altendky/openapi-mcp/actions/runs/34772262263)
+published all six npm packages with provenance. Initial registry tests ran before
+npm's installation metadata had propagated and could not resolve the native
+optional dependencies. After ordinary fresh-cache installs succeeded, rerunning
+the failed jobs passed all five platforms and finalized the original release.
+No artifacts were rebuilt or replaced.
+
+For read-only verification, its default mode can still be run on `main`:
 
 ```sh
 gh workflow run bootstrap-npm.yml --ref main
 ```
 
-Once validation passes and the temporary `NPM_TOKEN` Actions secret is configured,
-explicitly start publication:
+The original publishing dispatch used a temporary `NPM_TOKEN` Actions secret
+and explicitly requested publication:
 
 ```sh
 gh workflow run bootstrap-npm.yml --ref main -F publish=true
 ```
 
+The temporary Actions secret was removed after the successful run.
+
 This publishes the original platform tarballs before the launcher, checks fresh
 registry installs and npm exec/npx execution on all five platforms, and only
-then finalizes the existing GitHub release. It leaves `RELEASE_ENABLED` unset
+then finalizes the existing GitHub release. It does not change `RELEASE_ENABLED`
 and does not move the tag. npm provenance identifies this later publication
 workflow and its actual commit; the original build is identified separately by
 the pinned source run, commit, and bundle checksums.
 
-After publication, configure npm trusted publishers for the ordinary `ci.yml`
-workflow, remove and revoke the temporary token, and prepare the subsequent
-development-version PR. This bootstrap does not create that PR automatically.
-The original Actions artifact must remain available until bootstrap completes.
+The npm trusted publishers now use the ordinary `ci.yml` workflow. The workspace
+has advanced to `0.1.1-dev.0`; the bootstrap does not create that
+development-version PR automatically. Its original Actions artifact must remain
+available to rerun bootstrap verification.
 
 ## Prepare a release
 
