@@ -27,24 +27,26 @@ installs the produced tarballs outside the checkout to test actual npm package
 resolution. Linux distribution builds use musl targets. Artifacts are retained
 for inspection.
 
-All four Rust crates are published on crates.io at `0.1.0`, owned by `altendky`,
+All four Rust crates are published on crates.io at `0.1.1`, owned by `altendky`,
 with trusted publishing configured for this repository's `ci.yml` workflow.
 The initial crate publication used a temporary bootstrap token and the tested
 `v0.1.0` artifacts. Library consumers can use registry dependencies, and the CLI
-can be installed with `cargo install openapi-mcp --version 0.1.0 --locked`.
+can be installed with `cargo install openapi-mcp --version 0.1.1 --locked`.
 
-All six npm packages are published at `0.1.0` with provenance and have verified
+All six npm packages are published at `0.1.1` with provenance and have verified
 trusted publishers for this repository's `ci.yml` workflow. Direct publishing is
 enabled without a GitHub environment restriction. Their registry checksums match
 the original tested bundle, and fresh registry installs passed the stdio smoke
 test on all five platforms. Run the launcher with
-`npx --yes openapi-mcp-rs@0.1.0 --spec /path/to/openapi.json`.
+`npx --yes openapi-mcp-rs@0.1.1 --spec /path/to/openapi.json`.
 
-The [GitHub release](https://github.com/altendky/openapi-mcp/releases/tag/v0.1.0)
+The [GitHub release](https://github.com/altendky/openapi-mcp/releases/tag/v0.1.1)
 contains the same complete bundle. The `RELEASE_ENABLED` repository variable is
 enabled for automatic tagging and publishing of new stable releases. Ordinary
-development and packaging runs do not publish packages. The first automated
-OIDC publication remains to be exercised during the next stable release.
+development and packaging runs do not publish packages. The `0.1.1` release
+verified automated OIDC publication to both registries. npm processing and
+GitHub draft visibility delays required failed-job reruns using the original
+artifacts; the release process now waits for those services before continuing.
 
 Rust publication order is `openapi-mcp-spec`, `openapi-mcp-core`,
 `openapi-mcp-io`, then `openapi-mcp`. npm platform packages must be available
