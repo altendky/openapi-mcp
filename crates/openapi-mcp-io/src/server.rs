@@ -7,7 +7,7 @@ use rmcp::{
     ErrorData, RoleServer, ServerHandler,
     model::{
         CallToolRequestParams, CallToolResponse, Implementation, ListToolsResult,
-        PaginatedRequestParams, ServerCapabilities, ServerInfo,
+        PaginatedRequestParams, ServerCapabilities, ServerConfig,
     },
     service::RequestContext,
 };
@@ -19,7 +19,7 @@ use crate::api::{self, FileReadPolicy, RequestExecutor};
 ///
 /// The host supplies metadata, presentation/validation policy, and HTTP execution.
 pub struct OpenApiMcpServer<E> {
-    info: ServerInfo,
+    info: ServerConfig,
     spec: OpenApiSpec,
     tools: ToolSet,
     policy: Policy,
@@ -40,7 +40,7 @@ impl<E: RequestExecutor> OpenApiMcpServer<E> {
         executor: E,
     ) -> Self {
         Self {
-            info: ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+            info: ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
                 .with_server_info(Implementation::new(name, version))
                 .with_instructions("Search for an API operation, explain its inputs, then call it. Use schema lookup to inspect referenced component schemas."),
             spec,
@@ -79,7 +79,7 @@ impl<E: RequestExecutor> OpenApiMcpServer<E> {
 }
 
 impl<E: RequestExecutor + 'static> ServerHandler for OpenApiMcpServer<E> {
-    fn get_info(&self) -> ServerInfo {
+    fn get_info(&self) -> ServerConfig {
         self.info.clone()
     }
 
