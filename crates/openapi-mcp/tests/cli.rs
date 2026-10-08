@@ -16,7 +16,7 @@ fn missing_spec_is_a_startup_error_on_stderr() {
         .output()
         .expect("run binary");
     assert!(!output.status.success());
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout, Vec::<u8>::new());
     assert!(String::from_utf8_lossy(&output.stderr).contains("provide --spec"));
 }
 
@@ -31,7 +31,7 @@ fn unknown_config_fields_are_rejected() {
         .output()
         .expect("run binary");
     assert!(!output.status.success());
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout, Vec::<u8>::new());
     assert!(String::from_utf8_lossy(&output.stderr).contains("unknown field"));
 }
 

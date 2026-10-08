@@ -1575,7 +1575,7 @@ mod tests {
 
         assert_eq!(request.method, Method::GET);
         assert_eq!(request.path, "/documents/abc%2F123%20model");
-        assert!(request.query_params.is_empty());
+        assert_eq!(request.query_params, Vec::<(String, String)>::new());
         assert!(request.body.is_none());
     }
 
