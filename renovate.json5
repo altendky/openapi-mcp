@@ -68,6 +68,15 @@
       ],
       "enabled": false
     },
+    {
+      "description": "Keep the minimum Node test at the manually selected support floor",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["node"],
+      "matchDepTypes": ["uses-with"],
+      "matchFileNames": [".github/workflows/ci.yml"],
+      "matchCurrentValue": "/^22$/",
+      "enabled": false
+    },
 
     {
       "matchDepNames": ["rust-lang/rust"],
