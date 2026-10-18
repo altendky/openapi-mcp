@@ -53,6 +53,21 @@ jobs:
           cache-key: msrv
       - run: python scripts/check.py msrv
 
+  minimum-node:
+    name: Minimum supported Node.js
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+      - run: npm ci
+        working-directory: npm/openapi-mcp-rs
+      - run: npm test
+        working-directory: npm/openapi-mcp-rs
+
   test-and-package:
     name: Test and package (${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}
@@ -185,7 +200,7 @@ jobs:
   all:
     name: all
     if: ${{ !cancelled() }}
-    needs: [checks, msrv, test-and-package, cargo-package, release-artifacts, validation, coverage]
+    needs: [checks, msrv, minimum-node, test-and-package, cargo-package, release-artifacts, validation, coverage]
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1
