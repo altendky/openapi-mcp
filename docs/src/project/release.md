@@ -146,8 +146,8 @@ dependency versions, Cargo lockfile, and npm manifests/lockfile, then creates a
 signed commit, pushes the branch, and opens a PR. It does not update third-party
 dependencies. Any failure stops the command without an automatic retry.
 
-Review the PR and its checks, then approve and merge using the normal repository
-protections. Once publishing is enabled:
+Merge the PR through the normal repository protections after required checks
+pass. Review approvals are optional. Once publishing is enabled:
 
 1. Successful main CI creates the lightweight `vX.Y.Z` tag using the release App.
    It refuses to tag a stale main commit or replace an existing tag.
@@ -162,8 +162,9 @@ protections. Once publishing is enabled:
    and its checksums.
 5. The release App opens `post-release/vX.Y.Z` to advance main to the next patch's
    `-dev.0` version. GitHub signs the commit and the helper checks the signature.
-   Mergify approves these App-authored PRs and queues their `enqueue` label through
-   the usual checks and merge protections. Tags themselves are lightweight;
+   Mergify retains an automated-approval rule for these App-authored PRs and queues
+   their `enqueue` label through the usual checks and merge protections. Approval
+   is optional. Tags themselves are lightweight;
    they are not signed Git tag objects.
 
 The required `all` check describes validation. Publication and the post-release
