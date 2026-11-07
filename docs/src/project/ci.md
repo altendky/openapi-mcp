@@ -44,8 +44,9 @@ The workflow restricts Renovate to this repository and allows Mise lock updates.
 Keep the development Rust toolchain and MSRV update policies distinct.
 
 `.mergify.yml` queues eligible non-draft PRs to `main` when they receive the
-`enqueue` label. It uses merge commits and approves PRs from the configured
-Renovate bot and post-release version PRs from the release App. Both the Mergify configuration and its repository
+`enqueue` label. It uses merge commits and retains automated-approval rules for
+the configured Renovate bot and post-release version PRs from the release App.
+Review approvals are optional. Both the Mergify configuration and its repository
 access are needed for merge automation to operate.
 
 ## Release boundary
