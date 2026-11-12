@@ -17,7 +17,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           cache-key: coverage
-      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5
+      - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5
         with:
           cache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - run: mise run coverage
