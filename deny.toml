@@ -11,7 +11,11 @@ targets = [
 ]
 
 [advisories]
-ignore = []
+# Preserve the current policy across cargo-deny default changes.
+unmaintained = "all"
+ignore = [
+    { id = "RUSTSEC-2026-0543", reason = "Chrono maintenance notice: required through rmcp/schemars pending a released replacement; removal tracked at https://github.com/altendky/onshape-mcp/issues/1056" },
+]
 
 [licenses]
 allow = [

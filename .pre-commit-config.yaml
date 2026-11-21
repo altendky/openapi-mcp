@@ -41,6 +41,8 @@ repos:
     rev: v0.9.0
     hooks:
       - id: action-validator
+        # v0.9.0's upstream manifest triggers Cargo 1.100's redundant-homepage warning.
+        language_version: "1.99.1"
         args: [-v]
         files: ^\.github/(workflows/.*\.ya?ml|actions/.*/action\.ya?ml)$
 
