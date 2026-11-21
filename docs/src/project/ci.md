@@ -31,6 +31,22 @@ belong to [GitHub setup #4](https://github.com/altendky/openapi-mcp/issues/4).
 The inherited Windows npm test argument problem is tracked separately in
 [issue #2](https://github.com/altendky/openapi-mcp/issues/2).
 
+## Chrono maintenance advisory
+
+`deny.toml` excepts only [RUSTSEC-2026-0543](https://rustsec.org/advisories/RUSTSEC-2026-0543.html),
+the informational notice that Chrono is unmaintained. Chrono remains required
+through `rmcp` and its `schemars` integration; no patched Chrono version is
+available. All other advisories and the existing dependency-policy checks remain
+enabled, including unmaintained advisories throughout the dependency graph.
+
+[Follow-up #1056](https://github.com/altendky/onshape-mcp/issues/1056) tracks
+removal across both repositories, including
+[upstream discussion #1469](https://github.com/modelcontextprotocol/rust-sdk/issues/1469)
+and [the optional-Chrono proposal #1474](https://github.com/modelcontextprotocol/rust-sdk/pull/1474).
+Remove this exception once a released SDK configuration eliminates every Chrono
+dependency path and the security checks pass without the exception. A Chrono
+version bump or an unreleased upstream patch does not satisfy that condition.
+
 ## Dependency and merge automation
 
 `renovate.json5` configures dependency updates, pre-commit hook updates, tool
