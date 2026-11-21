@@ -47,6 +47,29 @@ Remove this exception once a released SDK configuration eliminates every Chrono
 dependency path and the security checks pass without the exception. A Chrono
 version bump or an unreleased upstream patch does not satisfy that condition.
 
+## Development coverage advisory exceptions
+
+The npm security check accepts only the current moderate
+[Glob cancellation advisory](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4)
+and [Minimatch amplification advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249)
+in the development-only c8 12.0.0 → test-exclude 8.0.0 → Glob 13.0.6 /
+Minimatch 10.2.4 chain. The adapter checks exact advisory URLs, package versions,
+development flags, node locations and consumers. It removes the four affected
+package records only when this entire reviewed chain still matches; a changed or
+mixed finding keeps the chain visible. Accepted IDs are printed with the
+tracking issue. Other findings remain reported, and high or critical findings,
+audit errors and unrecognized report formats still fail the existing gate.
+Development dependencies remain included in the audit.
+
+[Issue #169](https://github.com/altendky/openapi-mcp/issues/169) tracks the unresolved
+upstream remediation. Review by **2026-12-21**, or earlier when upstream publishes
+a compatible update or coverage starts accepting external patterns or cancellation
+signals. Remove the exception once a supported test-exclude/c8 release admits
+patched Glob and Minimatch versions and the unfiltered audit clears both
+advisories. No dependency overrides or Node support changes accompany this
+exception. The security task runs the focused policy regression tests before
+installing dependencies and running the explicit audit.
+
 ## Dependency and merge automation
 
 `renovate.json5` configures dependency updates, pre-commit hook updates, tool

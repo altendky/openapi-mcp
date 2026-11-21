@@ -42,7 +42,7 @@ access the network. The pre-commit link hook checks local links offline;
 | `mise run docs` | Build and test the mdBook documentation |
 | `mise run docs-links` | Check Markdown links |
 | `mise run pre-commit` | Run the repository's pre-commit hooks |
-| `mise run security` | Cargo dependency policy and npm audit, failing on high or critical npm advisories |
+| `mise run security` | Cargo policy, npm audit policy tests and audit, failing on high or critical npm advisories; [coverage exceptions](ci.md#development-coverage-advisory-exceptions) |
 
 Run the individual tasks relevant to a focused change. CI also checks every
 supported package platform and the minimum supported Rust version.
